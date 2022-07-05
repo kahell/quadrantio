@@ -1,5 +1,6 @@
 package com.quadrantio.assignment.assignment2
 
+import com.quadrantio.assignment.transforms.Transformers.dataframeNewDfTransforms
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
@@ -11,7 +12,7 @@ object assignment2 {
     dataFrame
       .withColumn("datetime", from_unixtime(ceil($"timestamp".divide(lit(1000.0)))))
       .groupBy(to_date(col("datetime")).as("day"))
-      .agg(countDistinct(col("device_id")).as("num_deviceid_perday"))
+      .agg(countDistinct(col("device_id"), col("latitude"), col("longitude"), col("datetime")).as("num_deviceid_perday"))
   }
 
   def completenessPercentage(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
@@ -30,7 +31,15 @@ object assignment2 {
   }
 
   def eventPerUserPerDay(spark: SparkSession, dataFrame: DataFrame): DataFrame = {
-    dataFrame.createOrReplaceTempView("eventperuser_table")
+    import dataFrame.sparkSession.implicits._
+
+    // transform
+    val transformDf = dataframeNewDfTransforms(dataFrame = dataFrame)
+
+    // drop duplicate
+    val dropDupDf = transformDf.dropDuplicates("device_id","round_latitude","round_longitude","datetime")
+
+    dropDupDf.createOrReplaceTempView("eventperuser_table")
     val query = {
       """
         | select

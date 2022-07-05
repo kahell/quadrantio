@@ -13,7 +13,7 @@ object assignment1 {
       .add("latitude", DoubleType, nullable = false)
       .add("longitude", DoubleType, nullable = false)
       .add("horizontal_accuracy", DoubleType, nullable = false)
-      .add("timestamp", LongType)
+      .add("timestamp", LongType, nullable = false)
       .add("ip_address", StringType, nullable = false)
       .add("device_os", StringType, nullable = false)
       .add("os_version", StringType, nullable = false)
@@ -27,7 +27,6 @@ object assignment1 {
 
     val df = spark.read
       .format("csv")
-      .option("header", "true")
       .schema(schema)
       .load(sourcePath)
     df
@@ -56,8 +55,6 @@ object assignment1 {
     )
       .count()
       .filter("count > 1")
-      .agg(sum("count").as("total_duplicate_records"))
-      .select(col("total_duplicate_records"))
 
     countDuplicate
   }
